@@ -12,6 +12,7 @@ import React from 'react';
 import { func } from 'prop-types';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal,Button,Form,Dropdown,DropdownButton}  from 'react-bootstrap';
+//import Search from './search';
 
 
 const getRandomPosition = () => ({
@@ -64,6 +65,7 @@ const CustomGraph: React.FC = () => {
             }
         }
         // forceAtlas2.assign(graph, 100);
+        
         loadGraph(graph);
     }, []);
 
@@ -72,6 +74,7 @@ const CustomGraph: React.FC = () => {
         registerEvents({
           clickNode(node) { 
             tnode = node.node;
+            sigma.getViewportZoomedState({x:0,y:0},1000);
             setToggleInfo(true);
             //setModalNodeSelect(node.node);
 
@@ -143,9 +146,7 @@ const CustomGraph: React.FC = () => {
 function Graph() {
     return (
         <div style={{ border: "1px solid black"}}>
-            <SigmaContainer>
-            <CustomGraph />
-            </SigmaContainer>
+            <CustomGraph /> 
         </div>
     )
 }
