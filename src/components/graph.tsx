@@ -26,17 +26,18 @@ const randomisePosition = (position: {x: number, y: number}) => ({
 
 
  
-let tnode = new String;
+let tnode:string;
 
 const CustomGraph: React.FC = () => { 
+ 
+    const loadGraph = useLoadGraph();
+    // New items
+    const registerEvents = useRegisterEvents()
     const sigma = useSigma();
-    
     const [getModalNodeSelect, setModalNodeSelect] = useState('');
     const [showInfoModal, setToggleInfo] = useState(false);
     const [showRegisterModal, setToggleRegister] = useState(false);
-    const textInput = useRef<HTMLInputElement>(null);   
-    const loadGraph = useLoadGraph();
-    const registerEvents = useRegisterEvents()
+    const textInput = useRef<HTMLInputElement>(null);  
 
     //let tnode = MouseNodeEvent();
     
@@ -115,7 +116,7 @@ const CustomGraph: React.FC = () => {
             </Form.Text>
 
             <DropdownButton id="dropdown-basic-button" title="Threat Level">
-              <Dropdown.Item title="LVL 1">Level 1</Dropdown.Item>
+              <Dropdown.Item >Level 1</Dropdown.Item>
               <Dropdown.Item >Level 2</Dropdown.Item>
               <Dropdown.Item >Level 3</Dropdown.Item>
             </DropdownButton>
@@ -126,7 +127,7 @@ const CustomGraph: React.FC = () => {
 
             <Modal.Footer>
               
-            <Button variant="dark" class='btn btn-primary' onClick={() => setToggleInfo(false) }>Set Node</Button>
+            <Button variant="dark"  onClick={() => setToggleInfo(false) }>Set Node</Button>
             <Button variant="secondary" onClick={() => setToggleInfo(false) }>Close</Button>
             <Button variant="primary" onClick={() => updateNode() }>Save changes</Button>
             
