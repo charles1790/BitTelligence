@@ -1,10 +1,18 @@
-import { ReactNode, useEffect } from 'react';
-import { useSigma, useLoadGraph } from 'react-sigma-v2'
+import { ReactNode, useEffect, useState,useRef } from 'react';
+import { useSigma, useLoadGraph,useRegisterEvents } from 'react-sigma-v2'
 import erdosRenyi from "graphology-generators/random/erdos-renyi";
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 import { DirectedGraph } from 'graphology';
 import { SigmaContainer } from 'react-sigma-v2';
-import data from './data.json'
+import data from './data.json';
+import ReactDOM from "react-dom";
+import { UndirectedGraph } from "graphology";
+//import JwModal from '/WebApps/BitTelligence/src/JwModal';
+import React from 'react';
+import { func } from 'prop-types';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Modal,Button,Form,Dropdown,DropdownButton}  from 'react-bootstrap';
+
 
 const getRandomPosition = () => ({
     x: (Math.random() - .5)*100,
@@ -17,8 +25,20 @@ const randomisePosition = (position: {x: number, y: number}) => ({
 });
 
 
-const CustomGraph: React.FC = () => {
+ 
+let tnode = new String;
+
+const CustomGraph: React.FC = () => { 
+    const sigma = useSigma();
+    
+    const [getModalNodeSelect, setModalNodeSelect] = useState('');
+    const [showInfoModal, setToggleInfo] = useState(false);
+    const [showRegisterModal, setToggleRegister] = useState(false);
+    const textInput = useRef<HTMLInputElement>(null);   
     const loadGraph = useLoadGraph();
+    const registerEvents = useRegisterEvents()
+
+    //let tnode = MouseNodeEvent();
     
     useEffect(() => {
         // let graph = erdosRenyi(DirectedGraph, {order: 20, probability: 0.1});
@@ -45,9 +65,79 @@ const CustomGraph: React.FC = () => {
         // forceAtlas2.assign(graph, 100);
         loadGraph(graph);
     }, []);
+
+    useEffect(() => {
+     
+        registerEvents({
+          clickNode(node) { 
+            tnode = node.node;
+            setToggleInfo(true);
+            //setModalNodeSelect(node.node);
+
+           console.log(node);
+          
+          },
+        });
+      }, []);
     
-    return <div></div>;
+
+    function updateNode()
+{
+    const graph =sigma.getGraph();
+    const pos = getRandomPosition();
+    const value = textInput.current?.value ?? '';
+    if(value != "")
+    graph.updateNode(tnode, Attr => {return { ...Attr, label:(value),color: "#FF0"};});
+    setToggleInfo(false);
 }
+
+    
+      return <div>     
+    <Modal show={showInfoModal}>
+            <Modal.Header closeButton onClick={()=> setToggleInfo(false)}>
+            <Modal.Title>Modal Node Info</Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+            
+            <Form.Label htmlFor="inputNameNode">Name Node</Form.Label>
+            <Form.Control
+                type="text"
+                placeholder={tnode}
+                id="inputNameNode"
+                aria-describedby="nameNode"
+                ref={textInput}
+            />
+            <Form.Text>
+                Your password must be 8-20 characters long, contain letters and numbers, and
+                must not contain spaces, special characters, or emoji.
+                <br></br>
+            </Form.Text>
+
+            <DropdownButton id="dropdown-basic-button" title="Threat Level">
+              <Dropdown.Item title="LVL 1">Level 1</Dropdown.Item>
+              <Dropdown.Item >Level 2</Dropdown.Item>
+              <Dropdown.Item >Level 3</Dropdown.Item>
+            </DropdownButton>
+
+
+        </Modal.Body>
+
+
+            <Modal.Footer>
+              
+            <Button variant="dark" class='btn btn-primary' onClick={() => setToggleInfo(false) }>Set Node</Button>
+            <Button variant="secondary" onClick={() => setToggleInfo(false) }>Close</Button>
+            <Button variant="primary" onClick={() => updateNode() }>Save changes</Button>
+            
+            </Modal.Footer>
+        </Modal>
+        </div>;
+
+    
+}
+
+
 
 function Graph() {
     return (
@@ -60,3 +150,40 @@ function Graph() {
 }
 
 export default Graph;
+
+function Example() {
+    const [show, setShow] = useState(false);
+  
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
+  
+    return (
+      <>
+        <Button variant="primary" onClick={handleShow}>
+          Launch static backdrop modal
+        </Button>
+  
+        <Modal
+          show={show}
+          onHide={handleClose}
+          backdrop="static"
+          keyboard={false}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>Modal title</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            I will not close if you click outside me. Don't even try to press
+            escape key.
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleClose}>
+              Close
+            </Button>
+            <Button variant="primary">Understood</Button>
+          </Modal.Footer>
+        </Modal>
+      </>
+    );
+  }
+  
