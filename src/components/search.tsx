@@ -58,12 +58,12 @@ const Search: FC<{ filters: FiltersState }> = ({ filters }) => {
         const searchString = e.target.value;
         const valueItem = values.find((value) => value.label === searchString);
         if (valueItem) {
-        setSearch(valueItem.label);
-        //setValues([]);
-        setSelected(valueItem.id);
+          setSearch(valueItem.label);
+          //setValues([]);
+          setSelected(valueItem.id);
         } else {
-        setSelected(null);
-        setSearch(searchString);
+          setSelected(null);
+          setSearch(searchString);
         }
     };
 
@@ -77,7 +77,7 @@ const Search: FC<{ filters: FiltersState }> = ({ filters }) => {
 
     return (
 
-        <div className="search-wrapper">
+    <div className="search-wrapper">
       <input
         type="search"
         placeholder="Search in nodes..."

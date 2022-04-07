@@ -1,42 +1,30 @@
-import { ReactNode, useEffect, useState, useRef } from 'react';
-import { useSigma, useLoadGraph, useRegisterEvents } from 'react-sigma-v2'
+import React,{ ReactNode, useEffect, useState, useRef } from 'react';
+import ReactDOM from "react-dom";
+import {formatMoney} from '../utils';
+
 import erdosRenyi from "graphology-generators/random/erdos-renyi";
 import forceAtlas2 from 'graphology-layout-forceatlas2';
-import { DirectedGraph } from 'graphology';
-import { SigmaContainer } from 'react-sigma-v2';
-import data from './data.json';
-import ReactDOM from "react-dom";
-import { UndirectedGraph } from "graphology";
-//import JwModal from '/WebApps/BitTelligence/src/JwModal';
-import React from 'react';
-import { func } from 'prop-types';
-import 'bootstrap/dist/css/bootstrap.min.css';
+
+import { useSigma, useLoadGraph, useRegisterEvents,SigmaContainer } from 'react-sigma-v2';
+import { DirectedGraph,UndirectedGraph } from 'graphology';
+import PropTypes,{ func } from 'prop-types';
 import { Modal, Button, Form, Dropdown, DropdownButton, Alert, AlertProps } from 'react-bootstrap';
-import PropTypes from 'prop-types';
-import { StringLiteralLike, updateTypePredicateNodeWithModifier } from 'typescript';
-//import Search from './search';
+import { PropertySignature, StringLiteralLike, updateTypePredicateNodeWithModifier } from 'typescript';
 
+import { getRandomPosition } from '../utils';
+let tnode: string = '';
+  let label: string = '';
+const Graph: React.FC<any> = (props) => {
+  
 
-const getRandomPosition = () => ({
-  x: (Math.random() - .5) * 100,
-  y: (Math.random() - .5) * 100
-});
-
-const randomisePosition = (position: { x: number, y: number }) => ({
-  x: position.x - (Math.random() - .5) * 10,
-  y: position.y - (Math.random() - .5) * 10
-});
-
-
-
-let tnode: string;
-let label: string;
-
-const CustomGraph: React.FC = () => {
-
+  
+  
   const loadGraph = useLoadGraph();
+  const registerEvents = useRegisterEvents();
+
+
   // New items
-  const registerEvents = useRegisterEvents()
+  
   const sigma = useSigma();
   const [getModalNodeSelect, setModalNodeSelect] = useState('');
   const [showInfoModal, setToggleInfo] = useState(false);
@@ -46,14 +34,41 @@ const CustomGraph: React.FC = () => {
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
-  //let tnode = MouseNodeEvent();
+  const data = props.data;
 
   useEffect(() => {
-    // let graph = erdosRenyi(DirectedGraph, {order: 20, probability: 0.1});
+
+
+
+    
+     /* let inputs = 0;
+      let outputs = 0;
+      
+      console.log("total_received: "+formatMoney(data.total_received));
+      console.log("total_sent: "+formatMoney(data.total_sent));
+      //console.log("final_balance: "+data.final_balance);
+
+      console.log("data.txs: "+data.txs.length);
+      data.txs.map((val2:any, idx2:any) => {
+
+        val2.inputs.map((val3:any,idx3:any) => {
+          if(val3.addr == data.address)
+            inputs +=val3.prev_out.value; 
+        });
+
+        val2.out.map((val3:any,idx3:any) => {
+          outputs +=val3.value; 
+        });
+  
+      });
+
+      console.log("total_received 2 "+formatMoney(outputs));
+      console.log("total_sent 2 "+formatMoney(inputs));*/
+   
+
+    
     let graph = new DirectedGraph();
-    // graph.addNode("Jessica", { label: "Jessica", size: 10 });
-    // graph.addNode("Truman", { label: "Truman", x: 0, y: 1, size: 5 });
-    // graph.addEdge("Jessica", "Truman", { color: "#CCC", size: 1 });
+
     graph.addNode(data.address, { label: data.address, x: 0, y: 0, size: 10 });
     for (let tx of data.txs) {
       // for (let input of tx.inputs) {
@@ -63,7 +78,7 @@ const CustomGraph: React.FC = () => {
         if (!graph.hasNode(out.addr)) {
           // const pos = randomisePosition(getRandomPosition());
           const pos = getRandomPosition();
-          graph.addNode(out.addr, { label: out.addr, size: 5, ...pos });
+          graph.addNode(out.addr, { label: out.addr, size: 5 ,...pos });
         }
         if (!graph.hasEdge(data.address, out.addr)) {
           graph.addEdge(data.address, out.addr, { color: "#CCC", size: 1 });
@@ -73,9 +88,6 @@ const CustomGraph: React.FC = () => {
     // forceAtlas2.assign(graph, 100);
 
     loadGraph(graph);
-  }, []);
-
-  useEffect(() => {
 
     registerEvents({
       clickNode(node) {
@@ -84,21 +96,22 @@ const CustomGraph: React.FC = () => {
         sigma.getViewportZoomedState({ x: 0, y: 0 }, 1000);
         setToggleInfo(true);
         //setModalNodeSelect(node.node);
-        console.log(node);
-
       },
     });
-  }, []);
+
+
+  }, [data]);
+
 
 
   function updateNode() {
     const graph = sigma.getGraph();
-    const pos = getRandomPosition();
     const value = textInput.current?.value ?? '';
+
+    console.log(graph.export());
 
     if (value != "") {
       const ccolor = graph.getNodeAttribute(tnode, 'label');
-      console.log(ccolor);
       graph.updateNode(tnode, Attr => { return { ...Attr, label: (value), color: "#02ee5a" }; });
     }
     setToggleInfo(false);
@@ -120,21 +133,23 @@ const CustomGraph: React.FC = () => {
     } else {
       color = "#ff0000";
       size = 25;
+      //document.getElementById("drop").style.color="red";
     }
     graph.updateNode(tnode, Attr => { return { ...Attr, color: color, size: size }; });
   }
   /* 
-function level2(){
- const graph =sigma.getGraph();
-   graph.updateNode(tnode, Attr => {return { ...Attr, color: "#ff8805"};});
-}
-function level3(){
- const graph =sigma.getGraph();
-   graph.updateNode(tnode, Attr => {return { ...Attr, color: "#ff0000"};});
-}*/
+  function level2(){
+    const graph =sigma.getGraph();
+    graph.updateNode(tnode, Attr => {return { ...Attr, color: "#ff8805"};});
+  }
+  function level3(){
+    const graph =sigma.getGraph();
+    graph.updateNode(tnode, Attr => {return { ...Attr, color: "#ff0000"};});
+  }
+  */
 
   //if (tnode != label) {
-   // this.getElementById('tonto').style.visibility = 'hidden';
+  // this.getElementById('tonto').style.visibility = 'hidden';
   //}
   return <div>
     <Modal show={showInfoModal}>
@@ -165,7 +180,7 @@ function level3(){
           <br></br>
         </Form.Text>
 
-        <DropdownButton id="" title="Threat Level">
+        <DropdownButton id="drop" title="Threat Level">
           <Dropdown.Item onClick={() => level(0)}>Level 0</Dropdown.Item>
           <Dropdown.Item onClick={() => level(1)}>Level 1</Dropdown.Item>
           <Dropdown.Item onClick={() => level(2)}>Level 2</Dropdown.Item>
@@ -175,7 +190,6 @@ function level3(){
 
       </Modal.Body>
 
-
       <Modal.Footer>
 
         <Button variant="dark" onClick={() => setShow(true)}>Set Node</Button>
@@ -184,47 +198,6 @@ function level3(){
 
       </Modal.Footer>
     </Modal>
-
-
   </div>;
-
-
 }
-
-/*function Example1() {
-  <Modal
-  show={show}
-  onHide={handleClose}
-  backdrop="static"
-  keyboard={false}
-  center
->
-  <Modal.Header closeButton>
-    <Modal.Title>Modal title</Modal.Title>
-  </Modal.Header>
-  <Modal.Body>
-    I will not close if you click outside me. Don't even try to press
-    escape key.
-  </Modal.Body>
-  <Modal.Footer>
-    <Button variant="secondary" onClick={handleClose}>
-      Close
-    </Button>
-    <Button variant="primary">Understood</Button>
-  </Modal.Footer>
-</Modal>
-}*/
-
-
-
-function Graph() {
-  return (
-    <div style={{ border: "1px solid black" }}>
-      <CustomGraph />
-    </div>
-  )
-}
-
 export default Graph;
-
-
