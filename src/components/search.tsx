@@ -1,4 +1,4 @@
-import { FC,KeyboardEvent,ChangeEvent,useEffect, useState } from 'react';
+import React,{ FC,KeyboardEvent,ChangeEvent,useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal,Button,Form,Dropdown,DropdownButton}  from 'react-bootstrap';
 import { useSigma, useLoadGraph,useRegisterEvents } from 'react-sigma-v2'
@@ -10,7 +10,6 @@ const Search: FC<{ filters: FiltersState }> = ({ filters }) => {
 
     const sigma = useSigma();
   
-
     const [search, setSearch] = useState<string>("");
     const [values, setValues] = useState<Array<{ id: string; label: string }>>([]);
     const [selected, setSelected] = useState<string | null>(null);
@@ -75,9 +74,10 @@ const Search: FC<{ filters: FiltersState }> = ({ filters }) => {
     };
 
 
+
     return (
 
-    <div className="search-wrapper">
+    <div className="search-wrapper" style={{"background":"#404040","border":"1px solid #5a5a5a","boxShadow":"4px -3px 6px 1px #000000e0","position":"absolute","bottom":"10px","left":"10px","padding":"5px","borderRadius":"10px","width":"200px"}}>
       <input
         type="search"
         placeholder="Search in nodes..."
@@ -85,6 +85,7 @@ const Search: FC<{ filters: FiltersState }> = ({ filters }) => {
         value={search}
         onChange={onInputChange}
         onKeyPress={onKeyPress}
+        style={{"background":"transparent","border":"0px","color":"#fff","outline":"none"}}
       />
      
       <datalist id="nodes">

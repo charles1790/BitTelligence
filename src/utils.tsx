@@ -1,3 +1,6 @@
+import { AnyPtrRecord } from "dns";
+import { getJSDocOverrideTagNoCache } from "typescript";
+
 export const getRandomPosition = () => ({
     x: (Math.random() - .5) * 100,
     y: (Math.random() - .5) * 100
@@ -21,3 +24,10 @@ export function formatMoney(number:number, places:number = 0, symbol:string = ''
     return symbol + negative + (j ? i.substr(0, j) + thousand : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousand) + (places ? decimal + Math.abs(number - parseInt(i)).toFixed(places).slice(2) : "");
 }
 
+
+
+export const getJsonNode = async (node:any)  : Promise<any> => {
+    const response = await fetch('https://blockchain.info/rawaddr/'+node+'?limit=10');
+    const data = await response.json(); 
+    return data;
+};

@@ -11,36 +11,21 @@ import PropTypes,{ func } from 'prop-types';
 import { Modal, Button, Form, Dropdown, DropdownButton, Alert, AlertProps } from 'react-bootstrap';
 import { PropertySignature, StringLiteralLike, updateTypePredicateNodeWithModifier } from 'typescript';
 
-import { getRandomPosition } from '../utils';
-let tnode: string = '';
-  let label: string = '';
+import { getRandomPosition, getJsonNode } from '../utils';
+import { Attributes } from 'graphology-types';
+
 const Graph: React.FC<any> = (props) => {
   
-
-  
-  
+  const data = props.data;
+  const sigma = useSigma();
   const loadGraph = useLoadGraph();
   const registerEvents = useRegisterEvents();
 
-
-  // New items
-  
-  const sigma = useSigma();
-  const [getModalNodeSelect, setModalNodeSelect] = useState('');
   const [showInfoModal, setToggleInfo] = useState(false);
-  const [showRegisterModal, setToggleRegister] = useState(false);
-  const textInput = useRef<HTMLInputElement>(null);
-  const [show, setShow] = useState(false);
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
-
-  const data = props.data;
+  const [currentNode, setCurrentNode] = useState(data.address);
+  const [textInput, setTextInput] = useState(currentNode);
 
   useEffect(() => {
-
-
-
-    
      /* let inputs = 0;
       let outputs = 0;
       
@@ -65,59 +50,80 @@ const Graph: React.FC<any> = (props) => {
       console.log("total_received 2 "+formatMoney(outputs));
       console.log("total_sent 2 "+formatMoney(inputs));*/
    
-
-    
     let graph = new DirectedGraph();
-
-    graph.addNode(data.address, { label: data.address, x: 0, y: 0, size: 10 });
-    for (let tx of data.txs) {
-      // for (let input of tx.inputs) {
-      //     if (!graph.hasNode(input.prev_out.addr)) {}
-      // }
-      for (let out of tx.out) {
-        if (!graph.hasNode(out.addr)) {
-          // const pos = randomisePosition(getRandomPosition());
-          const pos = getRandomPosition();
-          graph.addNode(out.addr, { label: out.addr, size: 5 ,...pos });
-        }
-        if (!graph.hasEdge(data.address, out.addr)) {
-          graph.addEdge(data.address, out.addr, { color: "#CCC", size: 1 });
+    if(data.address != null){
+      graph.addNode(data.address, { label: data.address, x: 0, y: 0, size: 10, total_received: data.total_received, total_sent: data.total_sent, final_balance: data.final_balance, total_txs: data.txs.length, firstnode: true });
+      for (let tx of data.txs) {
+        // for (let input of tx.inputs) {
+        //     if (!graph.hasNode(input.prev_out.addr)) {}
+        // }
+        for (let out of tx.out) {
+          if (!graph.hasNode(out.addr)) {
+            const pos = getRandomPosition();
+            graph.addNode(out.addr, { label: out.addr, size: 5 ,...pos });
+          }
+          if (!graph.hasEdge(data.address, out.addr)) {
+            graph.addEdge(data.address, out.addr, { color: "#CCC", size: 1 });
+          }
         }
       }
-    }
-    // forceAtlas2.assign(graph, 100);
+    }else{
+      
 
+      data.nodes.map( (node:any, index:number) => {
+
+          if(node.attributes.firstnode != null && node.attributes.firstnode)
+            graph.addNode(node.key, node.attributes);
+
+
+          if (!graph.hasNode(node.key)) {
+            const pos = getRandomPosition();
+            graph.addNode(node.key, node.attributes);
+          }
+
+          data.edges.map( (edge:any, index:number) => {
+            if (!graph.hasEdge(node.key, edge.source)) {
+              graph.addEdge(node.key, edge.source, edge.attributes);
+            }
+          });
+      });
+    }
     loadGraph(graph);
 
     registerEvents({
       clickNode(node) {
-        tnode = node.node;
-        label = sigma.getGraph().getNodeAttribute(tnode, 'label');
+        setTextInput('');
+        setCurrentNode(node.node);
         sigma.getViewportZoomedState({ x: 0, y: 0 }, 1000);
         setToggleInfo(true);
-        //setModalNodeSelect(node.node);
       },
     });
 
+    props.sCS(sigma.getGraph());
 
   }, [data]);
 
-
-
-  function updateNode() {
+  async function setNode(node:any)
+  {
+    const _data = await getJsonNode(node);
+    if(_data.txs != null ){
+      props.sBC(_data);
+      setToggleInfo(false);
+    }
+  }
+  function updateNode(node:any) {
     const graph = sigma.getGraph();
-    const value = textInput.current?.value ?? '';
-
-    console.log(graph.export());
+    const value = textInput;
 
     if (value != "") {
-      const ccolor = graph.getNodeAttribute(tnode, 'label');
-      graph.updateNode(tnode, Attr => { return { ...Attr, label: (value), color: "#02ee5a" }; });
+      graph.updateNode(node, Attr => { return { ...Attr, label: value, color: "#02ee5a" }; });
     }
     setToggleInfo(false);
+    setTextInput('');
+    props.sCS(sigma.getGraph());
   }
 
-  function level(lvl: number) {
+  function level(node:any,lvl: number) {
     const graph = sigma.getGraph();
     let color: string;
     let size: number;
@@ -135,22 +141,20 @@ const Graph: React.FC<any> = (props) => {
       size = 25;
       //document.getElementById("drop").style.color="red";
     }
-    graph.updateNode(tnode, Attr => { return { ...Attr, color: color, size: size }; });
+    graph.updateNode(node, Attr => { return { ...Attr, color: color, size: size }; });
   }
-  /* 
-  function level2(){
-    const graph =sigma.getGraph();
-    graph.updateNode(tnode, Attr => {return { ...Attr, color: "#ff8805"};});
-  }
-  function level3(){
-    const graph =sigma.getGraph();
-    graph.updateNode(tnode, Attr => {return { ...Attr, color: "#ff0000"};});
-  }
-  */
 
-  //if (tnode != label) {
-  // this.getElementById('tonto').style.visibility = 'hidden';
-  //}
+
+  const itemGraphNode = (attr:string) => { return (sigma.getGraph().hasNode(currentNode)) ? sigma.getGraph().getNodeAttribute(currentNode,attr) : null }
+  const itemDataNode =  (addr:string) => { 
+    if(data.address == null)
+    {
+      return data.edges.map( (node: any, index:number) => { if(node.source == addr || node.target == addr){ return node }  });
+    }else return data.txs.map((val:any,idx:any) => {  val.out.map( (val2:any,idx2:any) => { if(val2.addr == addr){ return val2 }  })}) 
+  }
+  const itemCurrentNode = itemDataNode(currentNode);
+
+
   return <div>
     <Modal show={showInfoModal}>
       <Modal.Header closeButton onClick={() => setToggleInfo(false)}>
@@ -159,20 +163,14 @@ const Graph: React.FC<any> = (props) => {
 
       <Modal.Body>
 
-        <Form.Label htmlFor="inputNameNode" id="tonto">Name Node</Form.Label>
-        <Form.Control
-          type="text"
-          placeholder={tnode}
-          id="inputNameNode"
-          aria-describedby="nameNode"
-          ref={textInput}
-        />
+        <Form.Label htmlFor="inputNameNode">Name Node</Form.Label>
+        <Form.Control type="text" value={ (textInput.length != 0) ? textInput : itemGraphNode('label')} onChange={(e) => { setTextInput(e.target.value) }} aria-describedby="nameNode" />
 
-        <Form.Label >{"Label: " + label}</Form.Label><br></br>
-        <Form.Label >{"Total Received: " + data.total_received}</Form.Label><br></br>
-        <Form.Label >{"Total Sent: " + data.total_sent}</Form.Label><br></br>
-        <Form.Label >{"Balance: " + data.final_balance}</Form.Label><br></br>
-        <Form.Label >{"Total Transactions: " + sigma.getGraph().size}</Form.Label><br></br>
+        <Form.Label >{"Adress: " + currentNode}</Form.Label><br></br>
+        {(data.address == currentNode) ? <><Form.Label >{"Total Received: " + itemGraphNode('total_received')}</Form.Label><br></br></> : null}
+        {(data.address == currentNode) ? <><Form.Label >{"Total Sent: " + itemGraphNode('total_sent')}</Form.Label><br></br></> : null}
+        {(data.address == currentNode) ? <><Form.Label >{"Balance: " + itemGraphNode('final_balance')}</Form.Label><br></br></> : null}
+        {(data.address == currentNode) ? <><Form.Label >{"Total Transactions: " + itemGraphNode('total_txs')}</Form.Label><br></br></> : null}
         <Form.Text>
           <br></br>
           Your password must be 8-20 characters long, contain letters and numbers, and
@@ -180,22 +178,18 @@ const Graph: React.FC<any> = (props) => {
           <br></br>
         </Form.Text>
 
-        <DropdownButton id="drop" title="Threat Level">
-          <Dropdown.Item onClick={() => level(0)}>Level 0</Dropdown.Item>
-          <Dropdown.Item onClick={() => level(1)}>Level 1</Dropdown.Item>
-          <Dropdown.Item onClick={() => level(2)}>Level 2</Dropdown.Item>
-          <Dropdown.Item onClick={() => level(3)}>Level 3</Dropdown.Item>
+        <DropdownButton id="drop" title="Threat Level" onSelect={ (e:any) => { if(e != null)level(currentNode,parseInt(e)) } }>
+          <Dropdown.Item eventKey={0} >Level 0</Dropdown.Item>
+          <Dropdown.Item eventKey={1}>Level 1</Dropdown.Item>
+          <Dropdown.Item eventKey={2}>Level 2</Dropdown.Item>
+          <Dropdown.Item eventKey={3}>Level 3</Dropdown.Item>
         </DropdownButton>
-
-
       </Modal.Body>
 
       <Modal.Footer>
-
-        <Button variant="dark" onClick={() => setShow(true)}>Set Node</Button>
+        <Button variant="dark" onClick={() => setNode(currentNode) }>Set Node</Button>
         <Button variant="secondary" onClick={() => setToggleInfo(false)}>Close</Button>
-        <Button variant="primary" onClick={() => updateNode()}>Save changes</Button>
-
+        <Button variant="primary" onClick={() => updateNode(currentNode)}>Save changes</Button>
       </Modal.Footer>
     </Modal>
   </div>;
