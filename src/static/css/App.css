@@ -37,6 +37,21 @@
   }
 }
 
+
+@media (max-width:880px){
+
+  .hidden_device_small{
+    display:none !important
+  }
+}
+
+@media (max-width:470px){
+
+  .hidden_device_small2{
+    display:none !important
+  }
+}
+
 .sigma-container {
   height: 100vh;
   width: 100%;

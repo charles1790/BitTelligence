@@ -1,18 +1,11 @@
-import React,{ ReactNode, useEffect, useState, useRef } from 'react';
-import ReactDOM from "react-dom";
-import {formatMoney} from '../utils';
-
-import erdosRenyi from "graphology-generators/random/erdos-renyi";
-import forceAtlas2 from 'graphology-layout-forceatlas2';
-
+import React,{ useEffect, useState, createRef } from 'react';
+import { getRandomPosition, getJsonNode, formatMoneyToBTC } from '../api/utils';
 import { useSigma, useLoadGraph, useRegisterEvents,SigmaContainer } from 'react-sigma-v2';
-import { DirectedGraph,UndirectedGraph } from 'graphology';
-import PropTypes,{ func } from 'prop-types';
+import { DirectedGraph } from 'graphology';
 import { Modal, Button, Form, Dropdown, DropdownButton, Alert, AlertProps } from 'react-bootstrap';
-import { PropertySignature, StringLiteralLike, updateTypePredicateNodeWithModifier } from 'typescript';
-
-import { getRandomPosition, getJsonNode } from '../utils';
 import { Attributes } from 'graphology-types';
+import Info from './info';
+import Bootbox from './bootbox';
 
 const Graph: React.FC<any> = (props) => {
   
@@ -21,71 +14,65 @@ const Graph: React.FC<any> = (props) => {
   const loadGraph = useLoadGraph();
   const registerEvents = useRegisterEvents();
 
+  const dialogRef = createRef<any>();
+
   const [showInfoModal, setToggleInfo] = useState(false);
   const [currentNode, setCurrentNode] = useState(data.address);
   const [textInput, setTextInput] = useState(currentNode);
+  const [levelSelect, setLevelSelect] = useState(-1);
+  const [enableSearch, setEnableSearch] = useState(true);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const levelNode = [
+    {name:'Default', color:'#999', size:10},
+    {name:'Level 1', color:'#ff0', size:15},
+    {name:'Level 2', color:'#ff8805', size:20},
+    {name:'Level 3', color:'#ff0000', size:25}
+  ];
 
   useEffect(() => {
-     /* let inputs = 0;
-      let outputs = 0;
-      
-      console.log("total_received: "+formatMoney(data.total_received));
-      console.log("total_sent: "+formatMoney(data.total_sent));
-      //console.log("final_balance: "+data.final_balance);
-
-      console.log("data.txs: "+data.txs.length);
-      data.txs.map((val2:any, idx2:any) => {
-
-        val2.inputs.map((val3:any,idx3:any) => {
-          if(val3.addr == data.address)
-            inputs +=val3.prev_out.value; 
-        });
-
-        val2.out.map((val3:any,idx3:any) => {
-          outputs +=val3.value; 
-        });
-  
-      });
-
-      console.log("total_received 2 "+formatMoney(outputs));
-      console.log("total_sent 2 "+formatMoney(inputs));*/
-   
+ 
     let graph = new DirectedGraph();
+
+    if(graph.nodes.length != 0)
+      graph.clear();
+
     if(data.address != null){
-      graph.addNode(data.address, { label: data.address, x: 0, y: 0, size: 10, total_received: data.total_received, total_sent: data.total_sent, final_balance: data.final_balance, total_txs: data.txs.length, firstnode: true });
+      graph.addNode(data.address, { label: data.address, x: 0, y: 0, color: "#0d6efd", size: 5, total_received: formatMoneyToBTC(data.total_received), total_sent: formatMoneyToBTC(data.total_sent), final_balance: formatMoneyToBTC(data.final_balance), total_txs: data.n_tx, firstnode: true });
       for (let tx of data.txs) {
-        // for (let input of tx.inputs) {
-        //     if (!graph.hasNode(input.prev_out.addr)) {}
-        // }
+        for (let input of tx.inputs) {
+            if (!graph.hasNode(input.prev_out.addr)) {
+              const pos = getRandomPosition();
+              graph.addNode(input.prev_out.addr, { label: input.prev_out.addr, money: input.prev_out.value, spent: input.prev_out.spent, is_output:false, is_input:true, size: 5, alert: -1,...pos });
+            }
+            if (!graph.hasEdge(data.address, input.prev_out.addr)) {
+              graph.addEdge(data.address, input.prev_out.addr, { color: "#36E51E", size: 1 });
+            }
+        }
         for (let out of tx.out) {
           if (!graph.hasNode(out.addr)) {
             const pos = getRandomPosition();
-            graph.addNode(out.addr, { label: out.addr, size: 5 ,...pos });
+            graph.addNode(out.addr, { label: out.addr, money: out.value,spent: out.spent, is_input:false, is_output:true, size: 5, alert: -1,...pos });
           }
           if (!graph.hasEdge(data.address, out.addr)) {
-            graph.addEdge(data.address, out.addr, { color: "#CCC", size: 1 });
+            graph.addEdge(data.address, out.addr, { color: "#E51E1E", size: 1 });
           }
         }
       }
     }else{
-      
-
       data.nodes.map( (node:any, index:number) => {
-
-          if(node.attributes.firstnode != null && node.attributes.firstnode)
-            graph.addNode(node.key, node.attributes);
-
-
-          if (!graph.hasNode(node.key)) {
-            const pos = getRandomPosition();
-            graph.addNode(node.key, node.attributes);
-          }
-
-          data.edges.map( (edge:any, index:number) => {
-            if (!graph.hasEdge(node.key, edge.source)) {
-              graph.addEdge(node.key, edge.source, edge.attributes);
-            }
-          });
+        if(node.attributes.firstnode != null && node.attributes.firstnode)
+          graph.addNode(node.key, node.attributes);
+        
+        if (!graph.hasNode(node.key)) {
+          const pos = getRandomPosition();
+          graph.addNode(node.key, node.attributes);
+        }
+      });
+      data.edges.map( (edge:any, index:number) => {
+        if (!graph.hasEdge(edge.source, edge.target)) {
+          graph.addEdge(edge.source, edge.target, edge.attributes);
+        }
       });
     }
     loadGraph(graph);
@@ -100,97 +87,120 @@ const Graph: React.FC<any> = (props) => {
     });
 
     props.sCS(sigma.getGraph());
+    props.sSigma(sigma);
 
   }, [data]);
 
-  async function setNode(node:any)
-  {
+  const setNode = async (node:any) => {
+    const graph = sigma.getGraph();
     const _data = await getJsonNode(node);
+
+    if(!enableSearch)
+    {
+        alert("Wait 10 seconds for the next query.");
+        return false;
+    }
+    
     if(_data.txs != null ){
       props.sBC(_data);
       setToggleInfo(false);
+
+      const nodeDisplayData = sigma.getNodeDisplayData(_data.address);
+      if (nodeDisplayData)
+      sigma.getCamera().animate( { ...nodeDisplayData, ratio: 1 }, { duration: 600 } );
+
     }
-  }
-  function updateNode(node:any) {
+
+    setEnableSearch(false);
+    setTimeout(() => { setEnableSearch(true); }, 10*1000);
+  };
+  const updateNode = (node:any) => {
     const graph = sigma.getGraph();
     const value = textInput;
+    const attrs = sigma.getGraph().getNodeAttributes(node);
+    let _lvl = { color : '#000', size: 7}; //Default Data
 
-    if (value != "") {
-      graph.updateNode(node, Attr => { return { ...Attr, label: value, color: "#02ee5a" }; });
-    }
+    if(levelSelect != -1)
+      _lvl = levelNode[levelSelect];
+    
+    graph.updateNode(node, Attr => { return { ...Attr, label: ((value != "" && value != node) ? value: attrs.label ), color: (attrs.firstnode != null && attrs.firstnode) ? '#0d6efd' : ((attrs.alert != -1 && levelSelect == -1 ) ? attrs.color : _lvl.color), size: ( levelSelect == -1) ? attrs.size : _lvl.size, alert: (levelSelect != -1) ? levelSelect : attrs.alert }; });
+      
     setToggleInfo(false);
+    setShowConfirm(false);
+    setLevelSelect(-1);
     setTextInput('');
     props.sCS(sigma.getGraph());
-  }
+  
+  };
+  const level = (lvl: number) => {
+    console.log(lvl);
+    setLevelSelect(lvl);
+  };
+  const itemGraphAttr = () => {
+    return (sigma.getGraph().hasNode(currentNode)) ? sigma.getGraph().getNodeAttributes(currentNode) : {}
+  };
+  const contentInfo = () => {
 
-  function level(node:any,lvl: number) {
-    const graph = sigma.getGraph();
-    let color: string;
-    let size: number;
-    if (lvl == 0) {
-      color = "#CCC";
-      size = 10;
-    } else if (lvl == 1) {
-      color = "#FF0";
-      size = 15;
-    } else if (lvl == 2) {
-      color = "#ff8805"
-      size = 20;
-    } else {
-      color = "#ff0000";
-      size = 25;
-      //document.getElementById("drop").style.color="red";
-    }
-    graph.updateNode(node, Attr => { return { ...Attr, color: color, size: size }; });
-  }
-
-
-  const itemGraphNode = (attr:string) => { return (sigma.getGraph().hasNode(currentNode)) ? sigma.getGraph().getNodeAttribute(currentNode,attr) : null }
-  const itemDataNode =  (addr:string) => { 
-    if(data.address == null)
-    {
-      return data.edges.map( (node: any, index:number) => { if(node.source == addr || node.target == addr){ return node }  });
-    }else return data.txs.map((val:any,idx:any) => {  val.out.map( (val2:any,idx2:any) => { if(val2.addr == addr){ return val2 }  })}) 
-  }
-  const itemCurrentNode = itemDataNode(currentNode);
-
+    let inputs: number = 0;
+    let outputs: number = 0;
+    sigma.getGraph().forEachNode((key: string, attributes: Attributes): void => {
+        if(attributes.is_input){
+          inputs++;
+        }else if(attributes.is_output){
+          outputs++;
+        }
+    });
+    let arrayData = [];
+    arrayData.push({ title:'Total Inputs:',value: inputs,style:{color:'#0AE82F', fontWeight:'bold'} });
+    arrayData.push({ title:'Total Outputs:',value: outputs,style:{color:'#E80A0A', fontWeight:'bold'} });
+  
+    return arrayData;
+  };
 
   return <div>
+    <Info content={contentInfo()} />
+    <Bootbox show={showConfirm} 
+				type={"confirm"}  
+				message={"Do That?"}
+				onSuccess={() => updateNode(currentNode)}  
+				onCancel={() => { setShowConfirm(false);setToggleInfo(true); }}  
+				onClose={() => { setShowConfirm(false);setToggleInfo(true); }} 
+    />
     <Modal show={showInfoModal}>
+
       <Modal.Header closeButton onClick={() => setToggleInfo(false)}>
         <Modal.Title>Modal Node Info</Modal.Title>
       </Modal.Header>
-
+      
       <Modal.Body>
+        <Form.Label htmlFor="inputNameNode">Name Node / Custom Name Node</Form.Label>
+        <Form.Control type="text" value={ (textInput.length != 0) ? textInput : itemGraphAttr().label} onChange={(e) => { setTextInput(e.target.value) }} aria-describedby="nameNode" />
 
-        <Form.Label htmlFor="inputNameNode">Name Node</Form.Label>
-        <Form.Control type="text" value={ (textInput.length != 0) ? textInput : itemGraphNode('label')} onChange={(e) => { setTextInput(e.target.value) }} aria-describedby="nameNode" />
+        <Form.Label style={{color : '#333'}} >{"Address: " + currentNode}</Form.Label><br></br>
+        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Total Received: ' + itemGraphAttr().total_received}</Form.Label><br></br></> : null}
+        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Total Sent: ' + itemGraphAttr().total_sent}</Form.Label><br></br></> : null}
+        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Balance: ' + itemGraphAttr().final_balance}</Form.Label><br></br></> : null}
+        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Total Transactions: ' + itemGraphAttr().total_txs}</Form.Label><br></br></> : null}
 
-        <Form.Label >{"Adress: " + currentNode}</Form.Label><br></br>
-        {(data.address == currentNode) ? <><Form.Label >{"Total Received: " + itemGraphNode('total_received')}</Form.Label><br></br></> : null}
-        {(data.address == currentNode) ? <><Form.Label >{"Total Sent: " + itemGraphNode('total_sent')}</Form.Label><br></br></> : null}
-        {(data.address == currentNode) ? <><Form.Label >{"Balance: " + itemGraphNode('final_balance')}</Form.Label><br></br></> : null}
-        {(data.address == currentNode) ? <><Form.Label >{"Total Transactions: " + itemGraphNode('total_txs')}</Form.Label><br></br></> : null}
-        <Form.Text>
-          <br></br>
-          Your password must be 8-20 characters long, contain letters and numbers, and
-          must not contain spaces, special characters, or emoji.
-          <br></br>
-        </Form.Text>
+        {(itemGraphAttr().is_input != null) ? <><Form.Label >{'Type: '+ ((itemGraphAttr().is_input) ? 'Input' : 'Output')} </Form.Label><br></br></> : null }
+        {(itemGraphAttr().spent != null) ? <><Form.Label >{'Spent: '+ ((itemGraphAttr().spent) ? 'Yes' : 'No')} </Form.Label><br></br></> : null }
+        {(itemGraphAttr().money != null) ? <><Form.Label >{'Total Money: '+ formatMoneyToBTC(itemGraphAttr().money)}</Form.Label><br></br></> : null }
 
-        <DropdownButton id="drop" title="Threat Level" onSelect={ (e:any) => { if(e != null)level(currentNode,parseInt(e)) } }>
-          <Dropdown.Item eventKey={0} >Level 0</Dropdown.Item>
-          <Dropdown.Item eventKey={1}>Level 1</Dropdown.Item>
-          <Dropdown.Item eventKey={2}>Level 2</Dropdown.Item>
-          <Dropdown.Item eventKey={3}>Level 3</Dropdown.Item>
+        <Form.Text>Select a Level (Current: {itemGraphAttr().alert}): </Form.Text>
+
+        <DropdownButton id="drop" title={(levelSelect != -1 ) ? levelNode[levelSelect].name : "Threat Level"} onSelect={ (e:any) => { if(e != null)level(parseInt(e)) } }>
+          {levelNode.map((item:any,key: number) => {
+            return (<Dropdown.Item key={key} eventKey={key} selected={ (itemGraphAttr().alert != -1 ) ? true : false }>{item.name}</Dropdown.Item>);
+          })}
         </DropdownButton>
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="dark" onClick={() => setNode(currentNode) }>Set Node</Button>
+        <Button variant="dark" onClick={() => setNode(currentNode) }>Apply Node</Button>
         <Button variant="secondary" onClick={() => setToggleInfo(false)}>Close</Button>
-        <Button variant="primary" onClick={() => updateNode(currentNode)}>Save changes</Button>
+        <Button variant="primary" onClick={() => {setToggleInfo(false); setShowConfirm(true); }}>Save changes</Button>
       </Modal.Footer>
+
     </Modal>
   </div>;
 }
