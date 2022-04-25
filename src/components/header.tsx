@@ -4,13 +4,13 @@ import { getJsonNode } from '../api/utils';
 
 import Icon from './icon';
 
-const Header : React.FC<any> = (props) => { 
+const Header : React.FC<any> = (props) => {
 
     const [inputValue, setValue] = useState('');
     const [enableSearch, setEnableSearch] = useState(true);
 
     let inputFile = React.createRef<HTMLInputElement>();
-    
+
     const SearchBC = async () => {
         if(!enableSearch)
         {
@@ -31,11 +31,11 @@ const Header : React.FC<any> = (props) => {
                 props.sBC(data);
             }
             setEnableSearch(false);
-            
+
             setTimeout(() => {
                 setEnableSearch(true);
             }, 10*1000);
-        }   
+        }
     };
     const ImportBC = () => {
         inputFile.current?.click();
@@ -57,7 +57,7 @@ const Header : React.FC<any> = (props) => {
           const link = document.createElement("a");
           link.href = jsonString;
           link.download = "data.json";
-      
+
           link.click();
     };
 
@@ -86,8 +86,8 @@ const Header : React.FC<any> = (props) => {
                 </div>
 
                 <div className="m-2 hidden_device_small" style={{"display":"flex","flexDirection":"row","justifyContent":"space-between","alignItems":"flex-start"}}>
-                    <span style={{ textTransform: 'capitalize', marginRight:'5px' }}><strong>BitIntelligence</strong></span>
-                    
+                    <span style={{ textTransform: 'capitalize', marginRight:'5px' }}><strong>BitTelligence - UMass Boston</strong></span>
+
                 </div>
 
                 <div className="mb-3 hidden_device_small2" style={{"display":"flex","minWidth" : '150px',"flexDirection":"row","justifyContent":"space-between","alignItems":"center"}}>
