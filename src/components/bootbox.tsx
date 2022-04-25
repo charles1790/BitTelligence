@@ -8,7 +8,7 @@ const BootBox : FC<any> = (props) => {
     <Modal show={props.show} fullscreen="sm-down">
 
         <Modal.Header closeButton onClick={props.onClose}>
-            <Modal.Title>Dialog</Modal.Title>
+            <Modal.Title>Confirm set flag</Modal.Title>
         </Modal.Header>
 
         <Modal.Body>
@@ -17,7 +17,7 @@ const BootBox : FC<any> = (props) => {
 
         <Modal.Footer>
             <Button variant="secondary" onClick={props.onCancel}>Cancel</Button>
-            <Button variant="primary" onClick={props.onSuccess}>Acept!</Button>
+            <Button variant="primary" onClick={props.onSuccess}>Yes</Button>
         </Modal.Footer>
 
         </Modal>

@@ -8,7 +8,7 @@ import Info from './info';
 import Bootbox from './bootbox';
 
 const Graph: React.FC<any> = (props) => {
-  
+
   const data = props.data;
   const sigma = useSigma();
   const loadGraph = useLoadGraph();
@@ -31,7 +31,7 @@ const Graph: React.FC<any> = (props) => {
   ];
 
   useEffect(() => {
- 
+
     let graph = new DirectedGraph();
 
     if(graph.nodes.length != 0)
@@ -63,7 +63,7 @@ const Graph: React.FC<any> = (props) => {
       data.nodes.map( (node:any, index:number) => {
         if(node.attributes.firstnode != null && node.attributes.firstnode)
           graph.addNode(node.key, node.attributes);
-        
+
         if (!graph.hasNode(node.key)) {
           const pos = getRandomPosition();
           graph.addNode(node.key, node.attributes);
@@ -100,7 +100,7 @@ const Graph: React.FC<any> = (props) => {
         alert("Wait 10 seconds for the next query.");
         return false;
     }
-    
+
     if(_data.txs != null ){
       props.sBC(_data);
       setToggleInfo(false);
@@ -122,15 +122,15 @@ const Graph: React.FC<any> = (props) => {
 
     if(levelSelect != -1)
       _lvl = levelNode[levelSelect];
-    
+
     graph.updateNode(node, Attr => { return { ...Attr, label: ((value != "" && value != node) ? value: attrs.label ), color: (attrs.firstnode != null && attrs.firstnode) ? '#0d6efd' : ((attrs.alert != -1 && levelSelect == -1 ) ? attrs.color : _lvl.color), size: ( levelSelect == -1) ? attrs.size : _lvl.size, alert: (levelSelect != -1) ? levelSelect : attrs.alert }; });
-      
+
     setToggleInfo(false);
     setShowConfirm(false);
     setLevelSelect(-1);
     setTextInput('');
     props.sCS(sigma.getGraph());
-  
+
   };
   const level = (lvl: number) => {
     console.log(lvl);
@@ -153,25 +153,25 @@ const Graph: React.FC<any> = (props) => {
     let arrayData = [];
     arrayData.push({ title:'Total Inputs:',value: inputs,style:{color:'#0AE82F', fontWeight:'bold'} });
     arrayData.push({ title:'Total Outputs:',value: outputs,style:{color:'#E80A0A', fontWeight:'bold'} });
-  
+
     return arrayData;
   };
 
   return <div>
     <Info content={contentInfo()} />
-    <Bootbox show={showConfirm} 
-				type={"confirm"}  
-				message={"Do That?"}
-				onSuccess={() => updateNode(currentNode)}  
-				onCancel={() => { setShowConfirm(false);setToggleInfo(true); }}  
-				onClose={() => { setShowConfirm(false);setToggleInfo(true); }} 
+    <Bootbox show={showConfirm}
+				type={"Confirm set flag"}
+				message={"Are you sure you want to change this node's flag?"}
+				onSuccess={() => updateNode(currentNode)}
+				onCancel={() => { setShowConfirm(false);setToggleInfo(true); }}
+				onClose={() => { setShowConfirm(false);setToggleInfo(true); }}
     />
     <Modal show={showInfoModal}>
 
       <Modal.Header closeButton onClick={() => setToggleInfo(false)}>
         <Modal.Title>Modal Node Info</Modal.Title>
       </Modal.Header>
-      
+
       <Modal.Body>
         <Form.Label htmlFor="inputNameNode">Name Node / Custom Name Node</Form.Label>
         <Form.Control type="text" value={ (textInput.length != 0) ? textInput : itemGraphAttr().label} onChange={(e) => { setTextInput(e.target.value) }} aria-describedby="nameNode" />
