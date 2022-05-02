@@ -76,7 +76,7 @@ const Search: FC<{ filters : FiltersState}> = ( { filters }) => {
     return (<div className="search-wrapper" style={{"minWidth":"200px","padding":"10px","borderRadius":"10px","border":"1px solid hsl(0deg 0% 35% / 62%)","boxShadow":"rgb(0 0 0 / 35%) 4px -3px 6px 1px","position":"absolute","bottom":"10px","left":"10px","outline":"none","background":"rgb(255 255 255 / 63%)"}}>
       <input
         type="search"
-        placeholder="Search in nodes..."
+        placeholder="Search Transaction's"
         list="nodes"
         value={search}
         onChange={onInputChange}

@@ -75,7 +75,7 @@ const Header : React.FC<any> = (props) => {
                 <div>
                     <InputGroup className="mb-3" style={{width:'300px'}}>
                         <FormControl
-                        placeholder="Search Key Node"
+                        placeholder="Search BTC Address"
                         aria-label="Search"
                         aria-describedby="basic-addon1"
                         value={inputValue}
