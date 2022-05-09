@@ -43,6 +43,10 @@ const Graph: React.FC<any> = (props) => {
         for (let input of tx.inputs) {
             if (!graph.hasNode(input.prev_out.addr)) {
               const pos = getRandomPosition();
+              if (pos.x < 0) {
+                pos.x *= -1;
+                pos.y += 2;
+              }
               graph.addNode(input.prev_out.addr, { label: input.prev_out.addr, money: input.prev_out.value, spent: input.prev_out.spent, is_output:false, is_input:true, size: 5, alert: -1,...pos });
             }
             if (!graph.hasEdge(data.address, input.prev_out.addr)) {
@@ -52,6 +56,10 @@ const Graph: React.FC<any> = (props) => {
         for (let out of tx.out) {
           if (!graph.hasNode(out.addr)) {
             const pos = getRandomPosition();
+            if (pos.x > 0) {
+              pos.x *= -1;
+              pos.y += 2;
+            }
             graph.addNode(out.addr, { label: out.addr, money: out.value,spent: out.spent, is_input:false, is_output:true, size: 5, alert: -1,...pos });
           }
           if (!graph.hasEdge(data.address, out.addr)) {
