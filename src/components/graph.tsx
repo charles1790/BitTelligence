@@ -159,8 +159,8 @@ const Graph: React.FC<any> = (props) => {
         }
     });
     let arrayData = [];
-    arrayData.push({ title:'Total Inputs:',value: inputs,style:{color:'#0AE82F', fontWeight:'bold'} });
-    arrayData.push({ title:'Total Outputs:',value: outputs,style:{color:'#E80A0A', fontWeight:'bold'} });
+    arrayData.push({ title:'Incoming Transactions:',value: inputs,style:{color:'#0AE82F', fontWeight:'bold'} });
+    arrayData.push({ title:'Outgoing Transactions:',value: outputs,style:{color:'#E80A0A', fontWeight:'bold'} });
 
     return arrayData;
   };
@@ -177,11 +177,11 @@ const Graph: React.FC<any> = (props) => {
     <Modal show={showInfoModal}>
 
       <Modal.Header closeButton onClick={() => setToggleInfo(false)}>
-        <Modal.Title>Modal Node Info</Modal.Title>
+        <Modal.Title>Wallet Information</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
-        <Form.Label htmlFor="inputNameNode">Name Node / Custom Name Node</Form.Label>
+        <Form.Label htmlFor="inputNameNode">Wallet Address / Change Address</Form.Label>
         <Form.Control type="text" value={ (textInput.length != 0) ? textInput : itemGraphAttr().label} onChange={(e) => { setTextInput(e.target.value) }} aria-describedby="nameNode" />
 
         <Form.Label style={{color : '#333'}} >{"Address: " + currentNode}</Form.Label><br></br>
