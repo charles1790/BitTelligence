@@ -5,6 +5,7 @@ import './static/css/App.css';
 import Header from './components/header';
 import Search from './components/search';
 import Graph from './components/graph';
+import Comments from './components/comments';
 
 const _infoProject = require('../package.json');
 
@@ -22,6 +23,7 @@ function App() {
         <Search filters={filtersState} />
         <Graph data={dataBC} sBC={(data:any) => {setDataBC(data)}} sCS={(data:any) => setCurrentSigma(data)} sSigma={(data:any) => setSigma(data)} />
       </SigmaContainer>
+      <Comments/>
     </>
   );
 }
