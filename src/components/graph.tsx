@@ -1,8 +1,8 @@
 import React,{ useEffect, useState, createRef } from 'react';
-import { getRandomPosition, getJsonNode, formatMoneyToBTC } from '../api/utils';
+import { getRandomPosition, getJsonNode, formatMoneyToBTC,getBTC } from '../api/utils';
 import { useSigma, useLoadGraph, useRegisterEvents,SigmaContainer } from 'react-sigma-v2';
 import { DirectedGraph } from 'graphology';
-import { Modal, Button, Form, Dropdown, DropdownButton, Alert, AlertProps } from 'react-bootstrap';
+import { Modal, Button, Form,ButtonGroup,ToggleButton,OverlayTrigger,Tooltip } from 'react-bootstrap';
 import { Attributes } from 'graphology-types';
 import Info from './info';
 import Bootbox from './bootbox';
@@ -22,11 +22,13 @@ const Graph: React.FC<any> = (props) => {
   const [levelSelect, setLevelSelect] = useState(-1);
   const [enableSearch, setEnableSearch] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [currentprice, sPrice] = useState(-1);
+  const [currency, setUSDCurrency] = useState(false);
 
   const levelNode = [
     {name:'Default', color:'#999', size:10},
-    {name:'Level 1', color:'#ff0', size:15},
-    {name:'Level 2', color:'#ff8805', size:20},
+    {name:'Level 1', color:'#0cfe00', size:15},
+    {name:'Level 2', color:'#ff0', size:20},
     {name:'Level 3', color:'#ff0000', size:25}
   ];
 
@@ -38,6 +40,7 @@ const Graph: React.FC<any> = (props) => {
       graph.clear();
 
     if(data.address != null){
+      getBTCPrice();
       graph.addNode(data.address, { label: data.address, x: 0, y: 0, color: "#0d6efd", size: 5, total_received: formatMoneyToBTC(data.total_received), total_sent: formatMoneyToBTC(data.total_sent), final_balance: formatMoneyToBTC(data.final_balance), total_txs: data.n_tx, firstnode: true });
       for (let tx of data.txs) {
         for (let input of tx.inputs) {
@@ -84,7 +87,9 @@ const Graph: React.FC<any> = (props) => {
       });
     }
     loadGraph(graph);
+   // price();
 
+    console.log("current functions " + currentprice);
     registerEvents({
       clickNode(node) {
         setTextInput('');
@@ -98,6 +103,15 @@ const Graph: React.FC<any> = (props) => {
     props.sSigma(sigma);
 
   }, [data]);
+
+  const getBTCPrice = async () => {
+    const _price = await getBTC();
+    sPrice(_price.USD);
+    return _price.USD;
+  };
+
+
+
 
   const setNode = async (node:any) => {
     const graph = sigma.getGraph();
@@ -165,8 +179,23 @@ const Graph: React.FC<any> = (props) => {
     return arrayData;
   };
 
+    const changeCurrency = (c:boolean)=> {
+
+      if(c){
+        setUSDCurrency(false);
+      return false;
+    }
+    setUSDCurrency(true);
+    return true;
+
+  };
+  function setCurrency (currentValue:boolean, item:any){
+
+      return (currentValue ? "$ "+((parseFloat(item)*currentprice).toFixed(2)) : item + " BTC"  );
+  }
   return <div>
     <Info content={contentInfo()} />
+    {/*
     <Bootbox show={showConfirm}
 				type={"Confirm set flag"}
 				message={"Are you sure you want to change this node's flag?"}
@@ -174,6 +203,7 @@ const Graph: React.FC<any> = (props) => {
 				onCancel={() => { setShowConfirm(false);setToggleInfo(true); }}
 				onClose={() => { setShowConfirm(false);setToggleInfo(true); }}
     />
+*/}
     <Modal show={showInfoModal}>
 
       <Modal.Header closeButton onClick={() => setToggleInfo(false)}>
@@ -185,28 +215,52 @@ const Graph: React.FC<any> = (props) => {
         <Form.Control type="text" value={ (textInput.length != 0) ? textInput : itemGraphAttr().label} onChange={(e) => { setTextInput(e.target.value) }} aria-describedby="nameNode" />
 
         <Form.Label style={{color : '#333'}} >{"Address: " + currentNode}</Form.Label><br></br>
-        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Total Received: ' + itemGraphAttr().total_received}</Form.Label><br></br></> : null}
-        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Total Sent: ' + itemGraphAttr().total_sent}</Form.Label><br></br></> : null}
-        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Balance: ' + itemGraphAttr().final_balance}</Form.Label><br></br></> : null}
-        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Total Transactions: ' + itemGraphAttr().total_txs}</Form.Label><br></br></> : null}
+        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Total Received: ' + setCurrency(currency,itemGraphAttr().total_received)}</Form.Label><br></br></> : null}
+        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Total Sent: ' + setCurrency(currency,itemGraphAttr().total_sent)}</Form.Label><br></br></> : null}
+        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Balance: ' + setCurrency(currency,itemGraphAttr().final_balance)}</Form.Label><br></br></> : null}
+        {(itemGraphAttr().firstnode) ? <><Form.Label >{'Total Transactions: ' + setCurrency(currency,itemGraphAttr().total_txs)}</Form.Label><br></br></> : null}
 
         {(itemGraphAttr().is_input != null) ? <><Form.Label >{'Type: '+ ((itemGraphAttr().is_input) ? 'Input' : 'Output')} </Form.Label><br></br></> : null }
         {(itemGraphAttr().spent != null) ? <><Form.Label >{'Spent: '+ ((itemGraphAttr().spent) ? 'Yes' : 'No')} </Form.Label><br></br></> : null }
-        {(itemGraphAttr().money != null) ? <><Form.Label >{'Total Money: '+ formatMoneyToBTC(itemGraphAttr().money)}</Form.Label><br></br></> : null }
+        {(itemGraphAttr().money != null) ? <><Form.Label >{'Total Money: '+setCurrency(currency,formatMoneyToBTC(itemGraphAttr().money))}</Form.Label><br></br></> : null }
 
         <Form.Text>Select a Level (Current: {itemGraphAttr().alert}): </Form.Text>
 
-        <DropdownButton id="drop" title={(levelSelect != -1 ) ? levelNode[levelSelect].name : "Threat Level"} onSelect={ (e:any) => { if(e != null)level(parseInt(e)) } }>
+        {/* <DropdownButton id="drop" title={(levelSelect != -1 ) ? levelNode[levelSelect].name : "Threat Level"} onSelect={ (e:any) => { if(e != null)level(parseInt(e)) } }>
           {levelNode.map((item:any,key: number) => {
             return (<Dropdown.Item key={key} eventKey={key} selected={ (itemGraphAttr().alert != -1 ) ? true : false }>{item.name}</Dropdown.Item>);
           })}
-        </DropdownButton>
+        </DropdownButton>  */}
+        <br></br>
+        <ButtonGroup className="mb-2">
+          {levelNode.map((item, idx) => (
+            <ToggleButton
+              key={idx}
+              id={`radio-${idx}`}
+              type="radio"
+              variant={idx== 0 ? 'outline-secondary' : (idx==1? 'outline-success' : (idx == 2 ? 'outline-warning' : 'outline-danger'))}
+              name="radio"
+              value={idx}
+              checked={levelSelect === idx}
+              onChange={(e) => setLevelSelect(idx)}
+            >
+              {item.name}
+            </ToggleButton>
+          ))}
+        </ButtonGroup>
+        <br></br>
+        <Button variant="outline-dark" onClick={() => changeCurrency(currency) }>Exchange Currency</Button>
+
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="dark" onClick={() => setNode(currentNode) }>Apply Node</Button>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="button-tooltip-2">Change your default wallet</Tooltip>}>
+          <Button variant="dark" onClick={() => setNode(currentNode)}>Change Wallet</Button>
+        </OverlayTrigger>
         <Button variant="secondary" onClick={() => setToggleInfo(false)}>Close</Button>
-        <Button variant="primary" onClick={() => {setToggleInfo(false); setShowConfirm(true); }}>Save changes</Button>
+        <Button variant="primary" onClick={() => { setToggleInfo(false); setShowConfirm(true); updateNode(currentNode); }}>Save changes</Button>
       </Modal.Footer>
 
     </Modal>
