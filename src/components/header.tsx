@@ -70,7 +70,7 @@ const Header : React.FC<any> = (props) => {
     };
 
     return <>
-        <header style={{zIndex:1,position:'fixed',width:'100%', height:'50px', background:'rgba(33 33 33 / 83%)', color:'#fff', padding:'5px', justifyContent:'center',alignItems:'center'}}>
+        <header style={{zIndex:1,width:'100%', height:'50px', background:'rgba(33 33 33 / 83%)', color:'#fff', padding:'5px', justifyContent:'center',alignItems:'center'}}>
             <div style={{"display":"flex","flexDirection":"row","width":"100%","alignItems":"flex-start","justifyContent":"space-between"}} >
                 <div>
                     <InputGroup className="mb-3" style={{width:'300px'}}>

@@ -1,10 +1,9 @@
 import {useState} from "react";
 
 const Comments = () => {
-    return (
-        <>
-        <textarea> Comments: </textarea>
-        </>
-    )
+
+    const [value, setValue] = useState('Comments:');
+
+    return (<textarea value={value} onChange={(e:any) => setValue(e.target.value) } />)
 }
 export default Comments
